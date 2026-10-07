@@ -23,6 +23,7 @@ function toFeedback(submission: Submission | null): Feedback | null {
     isPerfect: submission.isPerfect,
     englishText: submission.englishText,
     aiMode: mode === "gemini" || mode === "openai" ? mode : "demo",
+    pointsAwarded: submission.pointsAwarded,
   };
 }
 
@@ -84,10 +85,13 @@ export async function buildPracticeState(
       status,
       englishText: shown?.englishText ?? null,
       accuracy: accepted?.accuracy ?? null,
+      feedback: accepted ? toFeedback(accepted) : null,
     };
   });
 
   const done = sentences.filter((sentence) => sentence.status === "done").length;
+  // Chỉ hiện góp ý của câu đang làm (các lần chưa đạt). Câu đã đạt xem lại qua `sentences[].feedback`.
+  const currentSentence = sentences.find((sentence) => sentence.status === "current");
   return {
     user: await presentUser(user),
     essay: {
@@ -99,7 +103,9 @@ export async function buildPracticeState(
     },
     sentences,
     progress: { done, total: sentences.length },
-    feedback: toFeedback(latestSubmission(attempt.submissions)),
+    feedback: currentSentence
+      ? toFeedback(latestSubmission(attempt.submissions, currentSentence.id))
+      : null,
     attemptId: attempt.id,
     completed: attempt.status === "completed",
   };

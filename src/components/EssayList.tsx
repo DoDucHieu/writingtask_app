@@ -14,21 +14,6 @@ export function EssayList() {
   const [notice, setNotice] = useState("");
   const [pending, setPending] = useState(false);
 
-  async function load() {
-    const response = await fetch("/api/essays");
-    if (response.status === 401) {
-      router.push("/login");
-      return;
-    }
-    const data = (await response.json()) as { user: UserStats; essays: EssaySummary[]; error?: string };
-    if (!response.ok) {
-      setError(data.error ?? "Không tải được danh sách đề.");
-      return;
-    }
-    setUser(data.user);
-    setEssays(data.essays);
-  }
-
   useEffect(() => {
     let active = true;
     fetch("/api/essays")
@@ -63,14 +48,16 @@ export function EssayList() {
     setNotice("");
     setError("");
     const response = await fetch("/api/credits/topup", { method: "POST" });
-    const data = (await response.json().catch(() => null)) as { error?: string } | null;
+    const data = (await response.json().catch(() => null)) as
+      | { error?: string; user?: UserStats }
+      | null;
     setPending(false);
+    if (data?.user) setUser(data.user);
     if (!response.ok) {
       setError(data?.error ?? "Chưa nhận được lượt.");
       return;
     }
     setNotice("Đã cộng 10 lượt nộp cho hôm nay.");
-    await load();
   }
 
   async function logout() {

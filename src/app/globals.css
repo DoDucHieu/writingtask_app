@@ -26,3 +26,34 @@ body {
 textarea {
   caret-color: #f0c14b;
 }
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.toast-in {
+  animation: toast-in 0.25s ease-out;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.sheet-up {
+  animation: sheet-up 0.22s ease-out;
+}
+
+.sheet-fade {
+  animation: sheet-fade 0.22s ease-out;
+}

@@ -26,6 +26,7 @@ export type Feedback = {
   isPerfect: boolean;
   englishText: string;
   aiMode: "gemini" | "openai" | "demo";
+  pointsAwarded: number;
 };
 
 export type PracticeSentence = {
@@ -37,6 +38,7 @@ export type PracticeSentence = {
   status: "done" | "current" | "locked";
   englishText: string | null;
   accuracy: number | null;
+  feedback: Feedback | null;
 };
 
 export type EssaySummary = {

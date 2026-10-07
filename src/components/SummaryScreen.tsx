@@ -91,6 +91,19 @@ export function SummaryScreen({ attemptId }: { attemptId: string }) {
                 {sentence.englishText ?? "Bạn chưa có câu được lưu."}
               </p>
               {sentence.comment && <p className="mt-2 text-sm text-zinc-300">{sentence.comment}</p>}
+              {sentence.suggestedImprovements.length > 0 && (
+                <ul className="mt-3 space-y-2 border-l-2 border-[#f0c14b]/40 pl-3">
+                  {sentence.suggestedImprovements.map((item) => (
+                    <li key={item.title + item.explanation}>
+                      <p className="text-sm font-medium">{item.title}</p>
+                      <p className="mt-0.5 text-sm leading-6 text-zinc-400">{item.explanation}</p>
+                      {item.example && (
+                        <p className="mt-0.5 font-serif text-sm text-[#f0c14b]">{item.example}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <details className="mt-3 text-sm">
                 <summary className="cursor-pointer text-zinc-400">Một cách viết đạt</summary>
                 <p className="mt-2 font-serif text-[#f0c14b]">{sentence.referenceEnglish}</p>
