@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-be-vietnam), sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, serif;
+  --color-ink: #09090b;
+  --color-gold: #f0c14b;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+
+body {
+  background: #09090b;
+  color: #f4f4f5;
+  font-family: var(--font-be-vietnam), "Be Vietnam Pro", sans-serif;
+}
+
+::selection {
+  background: #f0c14b;
+  color: #1c1403;
+}
+
+textarea {
+  caret-color: #f0c14b;
+}

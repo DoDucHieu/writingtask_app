@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  credits       Int       @default(20)
+  points        Int       @default(0)
+  streak        Int       @default(0)
+  lastStudyDate String?
+  lastTopupDate String?
+  createdAt     DateTime  @default(now())
+  attempts      Attempt[]
+}
+
+model Essay {
+  slug       String     @id
+  title      String
+  prompt     String
+  topic      String
+  difficulty String
+  position   Int
+  sentences  Sentence[]
+  attempts   Attempt[]
+}
+
+model Sentence {
+  id               String       @id @default(cuid())
+  essaySlug        String
+  essay            Essay        @relation(fields: [essaySlug], references: [slug], onDelete: Cascade)
+  order            Int
+  vietnameseHint   String
+  referenceEnglish String
+  keywords         String
+  structureTip     String
+  submissions      Submission[]
+
+  @@unique([essaySlug, order])
+}
+
+model Attempt {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  essaySlug    String
+  essay        Essay        @relation(fields: [essaySlug], references: [slug])
+  status       String       @default("in_progress")
+  pointsEarned Int          @default(0)
+  startedAt    DateTime     @default(now())
+  completedAt  DateTime?
+  submissions  Submission[]
+
+  @@index([userId, essaySlug, status])
+}
+
+model Submission {
+  id                    String   @id @default(cuid())
+  attemptId             String
+  attempt               Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  sentenceId            String
+  sentence              Sentence @relation(fields: [sentenceId], references: [id])
+  englishText           String
+  accuracy              Float
+  suggestedImprovements String
+  comment               String
+  isPerfect             Boolean
+  pointsAwarded         Int
+  advanced              Boolean
+  aiMode                String
+  createdAt             DateTime @default(now())
+
+  @@index([attemptId, sentenceId])
+}
