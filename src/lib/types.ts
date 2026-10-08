@@ -19,8 +19,27 @@ export type UserStats = {
   achievements: Achievement[];
 };
 
+export type ScoreBreakdown = {
+  meaning: number;
+  grammar: number;
+  vocabulary: number;
+  coherence: number;
+};
+
+export type GradeError = {
+  criterion: keyof ScoreBreakdown;
+  issue: string;
+};
+
+/** Lý do câu chưa qua: tổng dưới ngưỡng, thiếu ý, hoặc còn lỗi ngữ pháp. */
+export type BlockReason = "score" | "meaning" | "grammar";
+
 export type Feedback = {
   accuracy: number;
+  errors: GradeError[];
+  blockReason: BlockReason | null;
+  /** null với bài chấm mẫu hoặc bài nộp trước khi có chấm theo tiêu chí. */
+  breakdown: ScoreBreakdown | null;
   suggestedImprovements: Improvement[];
   comment: string;
   isPerfect: boolean;
@@ -67,6 +86,8 @@ export type PracticeState = {
   sentences: PracticeSentence[];
   progress: { done: number; total: number };
   feedback: Feedback | null;
+  /** Lần nộp kế tiếp của câu hiện tại không trừ token (vừa bị chặn chỉ vì ngữ pháp). */
+  freeRetry: boolean;
   attemptId: string;
   completed: boolean;
 };

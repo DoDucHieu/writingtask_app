@@ -1,29 +1,59 @@
-import type { Improvement } from "@/lib/types";
+import type { BlockReason, GradeError, Improvement, ScoreBreakdown } from "@/lib/types";
 
 export const PASS_THRESHOLD = 70;
 export const INITIAL_CREDITS = 20;
 export const DAILY_TOPUP = 10;
 
+/** Xem docs/grading-criteria.md. Tổng các `max` phải bằng 100. */
+export const SCORE_CRITERIA: { key: keyof ScoreBreakdown; label: string; max: number }[] = [
+  { key: "meaning", label: "Đúng ý", max: 40 },
+  { key: "grammar", label: "Ngữ pháp & dấu câu", max: 30 },
+  { key: "vocabulary", label: "Từ vựng học thuật", max: 20 },
+  { key: "coherence", label: "Mạch lạc", max: 10 },
+];
+
 export type AiMode = "gemini" | "openai" | "demo";
 
 export type GradeResult = {
   accuracy: number;
+  breakdown: ScoreBreakdown | null;
+  errors: GradeError[];
   suggested_improvements: Improvement[];
   comment: string;
   is_perfect: boolean;
   aiMode: AiMode;
 };
 
+/** Đúng ý tối thiểu để qua câu, dù tổng điểm đã đủ. */
+export const MIN_MEANING = 32;
+
 /**
- * Câu từ 70% mới qua và được cộng điểm.
- * 100% = 10 điểm, 84% = 8 điểm. Dưới ngưỡng thì giữ nguyên câu để viết lại.
+ * Câu qua khi: tổng từ 70, Đúng ý từ 32/40, và không còn lỗi ngữ pháp nào.
+ * Điểm thưởng vẫn tính theo tổng: 100% = 10 điểm, 84% = 8 điểm.
+ * Bài chấm mẫu (không có breakdown) chỉ xét tổng.
  */
-export function scoreOutcome(accuracy: number) {
+export function scoreOutcome(
+  accuracy: number,
+  breakdown: ScoreBreakdown | null = null,
+  errors: GradeError[] = [],
+) {
   const rounded = Math.round(Math.min(100, Math.max(0, accuracy)) * 100) / 100;
-  const isPerfect = rounded >= 98;
-  const advanced = rounded >= PASS_THRESHOLD;
+  const grammarMax = SCORE_CRITERIA.find((item) => item.key === "grammar")?.max ?? 30;
+
+  let blockReason: BlockReason | null = null;
+  if (rounded < PASS_THRESHOLD) blockReason = "score";
+  else if (breakdown && breakdown.meaning < MIN_MEANING) blockReason = "meaning";
+  else if (
+    breakdown &&
+    (breakdown.grammar < grammarMax || errors.some((item) => item.criterion === "grammar"))
+  ) {
+    blockReason = "grammar";
+  }
+
+  const advanced = blockReason === null;
+  const isPerfect = advanced && rounded >= 98;
   const points = advanced ? Math.max(1, Math.round(rounded / 10)) : 0;
-  return { accuracy: rounded, isPerfect, advanced, points };
+  return { accuracy: rounded, isPerfect, advanced, points, blockReason };
 }
 
 function normalize(text: string) {
@@ -138,6 +168,8 @@ export function demoGrade(input: {
 
   return {
     accuracy: outcome.accuracy,
+    breakdown: null,
+    errors: [],
     suggested_improvements: outcome.isPerfect ? [] : suggested_improvements.slice(0, 2),
     comment,
     is_perfect: outcome.isPerfect,

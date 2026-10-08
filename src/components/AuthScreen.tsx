@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { beginRoute } from "@/components/RouteProgress";
 
 const DEMO_EMAIL = "demo@writing.local";
 const DEMO_PASSWORD = "demo1234";
@@ -31,6 +32,7 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
       setError(data?.error ?? "Không thực hiện được. Hãy thử lại.");
       return;
     }
+    beginRoute();
     router.push("/essays");
     router.refresh();
   }
@@ -51,23 +53,24 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
       setError(data?.error ?? "Tài khoản demo chưa sẵn sàng.");
       return;
     }
+    beginRoute();
     router.push("/essays");
     router.refresh();
   }
 
   return (
-    <main className="grid min-h-dvh bg-ink text-white lg:grid-cols-[1.1fr_0.9fr]">
+    <main className="grid min-h-dvh bg-ink text-fg lg:grid-cols-[1.1fr_0.9fr]">
       <section className="flex flex-col justify-between border-b border-white/10 px-6 py-8 lg:border-b-0 lg:border-r lg:px-12 lg:py-12">
-        <p className="text-xs font-semibold tracking-[0.22em] text-[#f0c14b]">IELTS TASK 2</p>
+        <p className="text-xs font-semibold tracking-[0.22em] text-gold">IELTS TASK 2</p>
         <div className="my-10 max-w-xl">
           <h1 className="font-serif text-4xl font-semibold leading-tight md:text-5xl">
             Viết từng câu, được góp ý ngay.
           </h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-zinc-400">
             Đọc ý tiếng Việt, viết một câu tiếng Anh, rồi xem độ chính xác và cách diễn đạt hay hơn.
-            Tài khoản mới có 20 lượt nộp. Mỗi ngày nhận thêm 10 lượt.
+            Tài khoản mới có 20 token. Mỗi ngày nhận thêm 10 token.
           </p>
-          <div className="mt-8 rounded-2xl bg-[#3a3114] p-4 ring-1 ring-[#f0c14b]/50">
+          <div className="mt-8 rounded-2xl bg-gold-soft p-4 ring-1 ring-gold/50">
             <p className="font-serif text-lg leading-7">
               Free tuition would give students from low-income families a fair chance.
             </p>
@@ -85,7 +88,7 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
           <p className="mt-2 text-sm text-zinc-400">
             {isLogin
               ? "Vào đúng bài đang viết dở."
-              : "Tạo xong là có 20 lượt nộp để luyện ngay."}
+              : "Tạo xong là có 20 token để luyện ngay."}
           </p>
 
           {!isLogin && (
@@ -95,7 +98,7 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 autoComplete="name"
-                className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 outline-none ring-[#f0c14b] focus:ring-2"
+                className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 outline-none ring-gold focus:ring-2"
               />
             </label>
           )}
@@ -106,7 +109,7 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
-              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 outline-none ring-[#f0c14b] focus:ring-2"
+              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 outline-none ring-gold focus:ring-2"
             />
           </label>
           <label className="mt-4 block text-sm">
@@ -116,16 +119,16 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete={isLogin ? "current-password" : "new-password"}
-              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 outline-none ring-[#f0c14b] focus:ring-2"
+              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 outline-none ring-gold focus:ring-2"
             />
           </label>
 
-          {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
+          {error && <p className="mt-4 text-sm text-danger">{error}</p>}
 
           <button
             type="submit"
             disabled={pending}
-            className="mt-6 w-full rounded-xl bg-[#f0c14b] px-4 py-3 font-semibold text-[#1c1403] disabled:opacity-60"
+            className="mt-6 w-full rounded-xl bg-gold px-4 py-3 font-semibold text-gold-ink disabled:opacity-60"
           >
             {pending ? "Đang xử lý..." : isLogin ? "Đăng nhập" : "Tạo tài khoản"}
           </button>
@@ -145,14 +148,14 @@ export function AuthScreen({ mode }: { mode: "login" | "register" }) {
             {isLogin ? (
               <>
                 Chưa có tài khoản?{" "}
-                <Link href="/register" className="text-[#f0c14b]">
+                <Link href="/register" className="text-gold">
                   Đăng ký
                 </Link>
               </>
             ) : (
               <>
                 Đã có tài khoản?{" "}
-                <Link href="/login" className="text-[#f0c14b]">
+                <Link href="/login" className="text-gold">
                   Đăng nhập
                 </Link>
               </>

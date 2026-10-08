@@ -1,8 +1,8 @@
 import type { Submission } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { parseImprovements, parseStringArray } from "@/lib/json";
+import { parseBreakdown, parseErrors, parseImprovements, parseStringArray } from "@/lib/json";
 import { presentUser } from "@/lib/user-stats";
-import type { Feedback, PracticeState } from "@/lib/types";
+import type { BlockReason, Feedback, PracticeState } from "@/lib/types";
 
 function latestSubmission(submissions: Submission[], sentenceId?: string) {
   const pool = sentenceId
@@ -11,11 +11,27 @@ function latestSubmission(submissions: Submission[], sentenceId?: string) {
   return pool.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ?? null;
 }
 
+/**
+ * Nộp lại miễn phí một lần khi lần nộp gần nhất của câu bị chặn chỉ vì ngữ pháp
+ * và đã trừ token. Lần miễn phí đó mà vẫn sai thì lần sau trừ token như thường.
+ */
+export function isFreeRetry(submissions: Submission[], sentenceId: string) {
+  const latest = latestSubmission(submissions, sentenceId);
+  return latest?.blockReason === "grammar" && latest.creditCost > 0;
+}
+
+function toBlockReason(value: string | null): BlockReason | null {
+  return value === "score" || value === "meaning" || value === "grammar" ? value : null;
+}
+
 function toFeedback(submission: Submission | null): Feedback | null {
   if (!submission) return null;
   const mode = submission.aiMode;
   return {
     accuracy: submission.accuracy,
+    errors: parseErrors(submission.errors),
+    blockReason: toBlockReason(submission.blockReason),
+    breakdown: parseBreakdown(submission.scoreBreakdown),
     suggestedImprovements: submission.isPerfect
       ? []
       : parseImprovements(submission.suggestedImprovements),
@@ -106,6 +122,7 @@ export async function buildPracticeState(
     feedback: currentSentence
       ? toFeedback(latestSubmission(attempt.submissions, currentSentence.id))
       : null,
+    freeRetry: currentSentence ? isFreeRetry(attempt.submissions, currentSentence.id) : false,
     attemptId: attempt.id,
     completed: attempt.status === "completed",
   };

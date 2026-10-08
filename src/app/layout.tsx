@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, Source_Serif_4 } from "next/font/google";
+import { RouteProgress } from "@/components/RouteProgress";
 import "./globals.css";
 
 const sans = Be_Vietnam_Pro({
@@ -26,7 +27,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className={`${sans.variable} ${serif.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <RouteProgress />
+        {children}
+      </body>
     </html>
   );
 }

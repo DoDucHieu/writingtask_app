@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { demoGrade, type AiMode, type GradeResult } from "@/lib/grading";
-import type { Improvement } from "@/lib/types";
+import { demoGrade, SCORE_CRITERIA, type AiMode, type GradeResult } from "@/lib/grading";
+import type { GradeError, Improvement, ScoreBreakdown } from "@/lib/types";
 
 const improvementSchema = z.union([
   z.string().transform((explanation) => ({
@@ -15,13 +15,33 @@ const improvementSchema = z.union([
   }),
 ]);
 
+function criterionScore(max: number) {
+  return z.coerce
+    .number()
+    .catch(0)
+    .transform((value) => Math.round(Math.min(max, Math.max(0, value))));
+}
+
+const maxOf = Object.fromEntries(SCORE_CRITERIA.map((item) => [item.key, item.max])) as Record<
+  keyof ScoreBreakdown,
+  number
+>;
+
 const gradeSchema = z.object({
-  accuracy: z.coerce.number().min(0).max(100),
+  scores: z.object({
+    meaning: criterionScore(maxOf.meaning),
+    grammar: criterionScore(maxOf.grammar),
+    vocabulary: criterionScore(maxOf.vocabulary),
+    coherence: criterionScore(maxOf.coherence),
+  }),
+  errors: z
+    .array(z.object({ criterion: z.string(), issue: z.string() }).catch({ criterion: "", issue: "" }))
+    .catch([])
+    .default([]),
   suggested_improvements: z.array(improvementSchema).optional().default([]),
   comment: z
     .string()
     .default("Hãy đọc lại ý tiếng Việt và viết thành một câu tiếng Anh hoàn chỉnh."),
-  is_perfect: z.boolean().optional().default(false),
 });
 
 export type GradeInput = {
@@ -89,32 +109,63 @@ Từ khóa gợi ý: ${input.keywords.join(", ")}
 Câu học viên vừa viết:
 ${input.answer}
 
-Chấm độ đúng ý so với câu tiếng Việt và độ tự nhiên của tiếng Anh học thuật. Diễn đạt khác câu tham chiếu nhưng đúng ý, đúng ngữ pháp vẫn được điểm cao.
+CHẤM THEO 4 TIÊU CHÍ (cho điểm nguyên từng tiêu chí; app tự cộng thành tổng 100):
 
-Trả về JSON thuần, không markdown, đúng các khóa sau:
+1. meaning — Đúng ý (0–40). So với Ý TIẾNG VIỆT, không so từng chữ với câu tham chiếu.
+   40: đủ mọi ý, đúng sắc thái và lập trường. 32–39: đủ ý chính, lệch nhẹ sắc thái hoặc thiếu chi tiết phụ.
+   20–31: thiếu một ý chính hoặc hiểu sai một phần. 1–19: chỉ đúng phần nhỏ. 0: sai ý, lạc đề, hoặc viết tiếng Việt.
+2. grammar — Ngữ pháp & dấu câu (0–30).
+   30: không lỗi. 26–29: một lỗi nhỏ không ảnh hưởng nghĩa (mạo từ, số ít/nhiều, viết hoa, thiếu dấu chấm cuối câu).
+   18–25: 2–3 lỗi nhỏ hoặc một lỗi rõ (thì, hòa hợp chủ ngữ – động từ, giới từ). 8–17: nhiều lỗi nhưng vẫn hiểu. 0–7: vỡ cấu trúc.
+3. vocabulary — Từ vựng học thuật (0–20).
+   20: không thể chọn từ nào chính xác hoặc tự nhiên hơn. 19: rất tốt, chỉ một chỗ có thể tinh chỉnh.
+   15–18: đúng nghĩa nhưng còn thông thường, collocation hơi gượng, hoặc cụm từ dễ hiểu nhầm (ví dụ "deep learning" là thuật ngữ AI).
+   10–14: chung chung, lặp từ, giọng văn nói. 0–9: dùng sai từ làm sai nghĩa.
+4. coherence — Mạch lạc (0–10). Xét với đề bài và các câu đã viết trước.
+   10: nối tự nhiên, từ nối phù hợp, đúng vai trò trong đoạn. 7–9: thiếu/thừa từ nối hoặc hơi lệch trọng tâm.
+   4–6: rời rạc. 0–3: mâu thuẫn với câu trước hoặc lập trường của bài.
+
+Quy trình bắt buộc:
+- Trước hết liệt kê lỗi cụ thể vào "errors", mỗi lỗi gắn với một tiêu chí. Soát lần lượt cả 4 tiêu chí, kể cả từng collocation và từ nối, như giám khảo IELTS khó tính. Không có lỗi thì để mảng rỗng.
+- Sau đó mới cho điểm. Tiêu chí nào không có lỗi nào trong "errors" thì cho TỐI ĐA. Tiêu chí có lỗi thì PHẢI trừ theo thang trên.
+- Diễn đạt khác câu tham chiếu nhưng đúng ý, đúng ngữ pháp KHÔNG phải là lỗi.
+- Câu viết bằng tiếng Việt hoặc chỉ là cụm từ rời: mọi tiêu chí rất thấp, tổng dưới 40.
+- Không làm tròn theo cảm giác; điểm phải khớp với các lỗi đã nêu.
+
+Trả về JSON thuần, không markdown, đúng thứ tự các khóa sau:
 {
-  "accuracy": số từ 0 đến 100,
+  "errors": [
+    { "criterion": "meaning" | "grammar" | "vocabulary" | "coherence", "issue": "mô tả lỗi ngắn bằng tiếng Việt" }
+  ],
+  "scores": { "meaning": 0-40, "grammar": 0-30, "vocabulary": 0-20, "coherence": 0-10 },
   "suggested_improvements": [
     { "title": "tiêu đề ngắn tiếng Việt", "explanation": "giải thích sư phạm bằng tiếng Việt", "example": "một câu tiếng Anh viết lại hay hơn" }
   ],
-  "comment": "nhận xét chung ngắn bằng tiếng Việt",
-  "is_perfect": true hoặc false
+  "comment": "nhận xét chung ngắn bằng tiếng Việt"
 }
 
-Quy tắc:
-- suggested_improvements và comment phải bằng tiếng Việt. example là tiếng Anh.
-- Tối đa 2 gợi ý. Dạy cách viết hay (từ nối, giọng học thuật, độ dài một câu), không chỉ sửa lỗi chính tả.
-- Nếu câu viết bằng tiếng Việt hoặc quá cụt, accuracy dưới 40.
-- is_perfect chỉ true khi câu gần như không cần sửa (accuracy từ 98 trở lên). Khi đó suggested_improvements là mảng rỗng.
-- Không khen xã giao. Nói rõ câu đã qua ý chưa.`;
+Quy tắc khác:
+- suggested_improvements, comment và issue phải bằng tiếng Việt. example là tiếng Anh.
+- Tối đa 2 gợi ý, ưu tiên sửa các lỗi trong "errors". Dạy cách viết hay (từ nối, giọng học thuật, độ dài một câu), không chỉ sửa lỗi chính tả.
+- Nếu "errors" rỗng và mọi tiêu chí đạt tối đa thì suggested_improvements là mảng rỗng.
+- Không khen xã giao. Comment nói rõ câu đã qua ý chưa và mất điểm chủ yếu ở đâu.`;
 }
 
 function toResult(raw: unknown, aiMode: AiMode): GradeResult {
   const parsed = gradeSchema.parse(raw);
+  const breakdown: ScoreBreakdown = parsed.scores;
+  const accuracy = SCORE_CRITERIA.reduce((sum, item) => sum + breakdown[item.key], 0);
   const improvements: Improvement[] = parsed.suggested_improvements.slice(0, 2);
-  const isPerfect = parsed.is_perfect || parsed.accuracy >= 98;
+  const errors: GradeError[] = parsed.errors.flatMap((item) =>
+    item.criterion in maxOf && item.issue.trim()
+      ? [{ criterion: item.criterion as GradeError["criterion"], issue: item.issue.trim() }]
+      : [],
+  );
+  const isPerfect = accuracy >= 98 && errors.length === 0;
   return {
-    accuracy: parsed.accuracy,
+    accuracy,
+    breakdown,
+    errors,
     suggested_improvements: isPerfect ? [] : improvements,
     comment: parsed.comment,
     is_perfect: isPerfect,
@@ -136,8 +187,9 @@ async function callGemini(input: GradeInput): Promise<GradeResult> {
         contents: [{ role: "user", parts: [{ text: buildPrompt(input) }] }],
         generationConfig: {
           responseMimeType: "application/json",
+          temperature: 0.2,
           thinkingConfig: { thinkingLevel },
-          maxOutputTokens: 800,
+          maxOutputTokens: 1200,
         },
       }),
     },

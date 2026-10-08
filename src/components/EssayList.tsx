@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { FlameIcon, StarIcon, TokenIcon } from "@/components/icons";
+import { beginRoute } from "@/components/RouteProgress";
+import { Bone } from "@/components/Skeleton";
 import { StatChip } from "@/components/StatChip";
 import type { EssaySummary, UserStats } from "@/lib/types";
 
@@ -19,6 +22,7 @@ export function EssayList() {
     fetch("/api/essays")
       .then(async (response) => {
         if (response.status === 401) {
+          beginRoute();
           router.push("/login");
           return;
         }
@@ -54,37 +58,51 @@ export function EssayList() {
     setPending(false);
     if (data?.user) setUser(data.user);
     if (!response.ok) {
-      setError(data?.error ?? "Chưa nhận được lượt.");
+      setError(data?.error ?? "Chưa nhận được token.");
       return;
     }
-    setNotice("Đã cộng 10 lượt nộp cho hôm nay.");
+    setNotice("Đã cộng 10 token cho hôm nay.");
   }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    beginRoute();
     router.push("/login");
     router.refresh();
   }
 
   return (
-    <main className="min-h-dvh bg-ink text-white">
+    <main className="min-h-dvh bg-ink text-fg">
       <header className="border-b border-white/10 px-4 py-4 md:px-8">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold tracking-[0.2em] text-[#f0c14b]">IELTS TASK 2</p>
+            <p className="text-xs font-semibold tracking-[0.2em] text-gold">IELTS TASK 2</p>
             <h1 className="mt-1 text-xl font-semibold">
               {user ? `Xin chào, ${user.name}` : "Danh sách đề"}
             </h1>
           </div>
           {user && (
             <div className="flex flex-wrap items-center gap-2">
-              <StatChip label="Lượt" value={user.credits} alert={user.credits === 0} />
-              <StatChip label="Điểm" value={user.points.toLocaleString("vi-VN")} />
-              <StatChip label="Chuỗi" value={`${user.streak} ngày`} />
+              <StatChip
+                label="Token"
+                value={user.credits}
+                icon={<TokenIcon className="h-4 w-4" />}
+                alert={user.credits === 0}
+              />
+              <StatChip
+                label="Điểm"
+                value={user.points.toLocaleString("vi-VN")}
+                icon={<StarIcon className="h-4 w-4" />}
+              />
+              <StatChip
+                label="Chuỗi"
+                value={`${user.streak} ngày`}
+                icon={<FlameIcon className="h-4 w-4" />}
+              />
               <button
                 type="button"
                 onClick={logout}
-                className="rounded-lg px-3 py-2 text-sm text-zinc-400 hover:text-white"
+                className="rounded-lg px-3 py-2 text-sm text-zinc-400 hover:text-fg"
               >
                 Đăng xuất
               </button>
@@ -97,27 +115,48 @@ export function EssayList() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-xl text-sm leading-6 text-zinc-400">
             Mỗi đề là một dàn ý 6 câu. Bạn viết tiếng Anh cho từng ý. Câu từ 70% mới sang câu sau,
-            và mỗi lần nộp trừ 1 lượt.
+            và mỗi lần nộp trừ 1 token.
           </p>
           <button
             type="button"
             onClick={topup}
             disabled={pending || !user?.canTopup}
-            className="rounded-xl bg-white/10 px-4 py-2 text-sm disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm disabled:opacity-50"
           >
-            {user?.canTopup ? "Nhận 10 lượt hôm nay" : "Đã nhận lượt hôm nay"}
+            <TokenIcon className="h-4 w-4 text-gold" />
+            {user?.canTopup ? "Nhận 10 token hôm nay" : "Đã nhận token hôm nay"}
           </button>
         </div>
         {notice && <p className="mt-4 text-sm text-emerald-300">{notice}</p>}
-        {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
+        {error && <p className="mt-4 text-sm text-danger">{error}</p>}
 
-        {!user && !error && <p className="mt-10 text-sm text-zinc-500">Đang tải đề...</p>}
+        {!user && !error && (
+          <>
+            <p className="sr-only">Đang tải đề</p>
+            <div className="mt-6 grid gap-4 md:grid-cols-2" aria-hidden="true">
+            {[0, 1].map((item) => (
+              <article key={item} className="rounded-2xl border border-white/10 bg-surface p-5">
+                <div className="flex items-center justify-between">
+                  <Bone className="h-3 w-24" />
+                  <Bone className="h-3 w-20" />
+                </div>
+                <Bone className="mt-4 h-7 w-2/3" />
+                <Bone className="mt-3 h-4 w-full" />
+                <Bone className="mt-2 h-4 w-5/6" />
+                <Bone className="mt-4 h-1.5 w-full rounded-full" />
+                <Bone className="mt-4 h-9 w-28 rounded-xl" />
+              </article>
+            ))}
+            </div>
+          </>
+        )}
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {user && (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
           {essays.map((essay) => (
-            <article key={essay.slug} className="rounded-2xl border border-white/10 bg-[#121214] p-5">
+            <article key={essay.slug} className="rounded-2xl border border-white/10 bg-surface p-5">
               <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="font-medium uppercase tracking-wider text-[#f0c14b]">{essay.topic}</span>
+                <span className="font-medium uppercase tracking-wider text-gold">{essay.topic}</span>
                 <span className="text-zinc-500">
                   {essay.difficulty} · {essay.total} câu
                 </span>
@@ -126,7 +165,7 @@ export function EssayList() {
               <p className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-400">{essay.prompt}</p>
               <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-[#f0c14b]"
+                  className="h-full rounded-full bg-gold"
                   style={{ width: `${essay.total ? (essay.done / essay.total) * 100 : 0}%` }}
                 />
               </div>
@@ -139,14 +178,14 @@ export function EssayList() {
                 {essay.status === "completed" && essay.attemptId ? (
                   <Link
                     href={`/summary/${essay.attemptId}`}
-                    className="rounded-xl bg-[#f0c14b] px-4 py-2 text-sm font-semibold text-[#1c1403]"
+                    className="rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-gold-ink"
                   >
                     Xem tổng kết
                   </Link>
                 ) : (
                   <Link
                     href={`/practice/${essay.slug}`}
-                    className="rounded-xl bg-[#f0c14b] px-4 py-2 text-sm font-semibold text-[#1c1403]"
+                    className="rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-gold-ink"
                   >
                     {essay.status === "in_progress" ? "Viết tiếp" : "Bắt đầu"}
                   </Link>
@@ -162,7 +201,8 @@ export function EssayList() {
               </div>
             </article>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </main>
   );

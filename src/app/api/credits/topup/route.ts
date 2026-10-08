@@ -28,7 +28,7 @@ export async function POST() {
   if (granted.count === 0) {
     return NextResponse.json(
       {
-        error: "Hôm nay bạn đã nhận lượt miễn phí. Mai hãy quay lại.",
+        error: "Hôm nay bạn đã nhận token miễn phí. Mai hãy quay lại.",
         user: await presentUser(fresh),
       },
       { status: 409 },

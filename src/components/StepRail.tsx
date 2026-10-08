@@ -21,9 +21,9 @@ export function StepRail({
           ✓
         </span>
       ) : status === "current" ? (
-        <span className="relative h-5 w-5 rounded-full bg-[#f0c14b] ring-4 ring-[#f0c14b]/20" />
+        <span className="relative h-5 w-5 rounded-full bg-gold ring-4 ring-gold/20" />
       ) : (
-        <span className="relative h-5 w-5 rounded-full border-2 border-zinc-600 bg-[#09090b]" />
+        <span className="relative h-5 w-5 rounded-full border-2 border-zinc-600 bg-ink" />
       )}
     </div>
   );

@@ -1,30 +1,53 @@
 @import "tailwindcss";
 
+/*
+ * Bảng màu chung — đổi màu cả app chỉ cần sửa ở đây.
+ * Nền than dịu thay cho đen tuyền, chữ trắng ngà thay cho trắng tinh,
+ * vàng chủ đạo giảm độ bão hoà để đỡ chói khi nhìn lâu.
+ */
 @theme inline {
   --font-sans: var(--font-be-vietnam), sans-serif;
   --font-serif: var(--font-source-serif), Georgia, serif;
-  --color-ink: #09090b;
-  --color-gold: #f0c14b;
+
+  --color-ink: #15171c; /* nền trang */
+  --color-surface: #1c1f26; /* thẻ, ngăn kéo */
+  --color-surface-2: #232730; /* hộp thoại, menu nổi */
+  --color-fg: #e7e4dd; /* chữ chính */
+
+  --color-gold: #d8ad5c; /* màu nhấn chính */
+  --color-gold-ink: #241a06; /* chữ đặt trên nền vàng */
+  --color-gold-soft: #2c2719; /* nền câu đang làm */
+  --color-hint: #18233a; /* hộp gợi ý */
+  --color-danger: #e85d5d; /* sai, điểm thấp, lỗi */
+  --color-danger-ink: #2a0808; /* chữ đặt trên nền đỏ */
+
+  /* Xám ấm và sáng hơn một chút để chữ phụ dễ đọc trên nền than. */
+  --color-zinc-200: #e0ddd6;
+  --color-zinc-300: #cfccc5;
+  --color-zinc-400: #aaa79f;
+  --color-zinc-500: #8b8880;
+  --color-zinc-600: #66645e;
+  --color-zinc-700: #3b3d44;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 transparent;
+  scrollbar-color: var(--color-zinc-700) transparent;
 }
 
 body {
-  background: #09090b;
-  color: #f4f4f5;
+  background: var(--color-ink);
+  color: var(--color-fg);
   font-family: var(--font-be-vietnam), "Be Vietnam Pro", sans-serif;
 }
 
 ::selection {
-  background: #f0c14b;
-  color: #1c1403;
+  background: var(--color-gold);
+  color: var(--color-gold-ink);
 }
 
 textarea {
-  caret-color: #f0c14b;
+  caret-color: var(--color-gold);
 }
 
 @keyframes toast-in {
@@ -56,4 +79,17 @@ textarea {
 
 .sheet-fade {
   animation: sheet-fade 0.22s ease-out;
+}
+
+@keyframes route-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.route-progress {
+  animation: route-progress 1s ease-in-out infinite;
 }

@@ -18,7 +18,7 @@ export function BottomSheet({
   return (
     <div className="fixed inset-0 z-40 flex flex-col justify-end lg:hidden" role="dialog" aria-modal="true" aria-label={title}>
       <div className="sheet-fade absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="sheet-up relative flex max-h-[78dvh] flex-col rounded-t-2xl bg-[#121214] ring-1 ring-white/10">
+      <div className="sheet-up relative flex max-h-[78dvh] flex-col rounded-t-2xl bg-surface ring-1 ring-white/10">
         <div
           className="relative shrink-0 touch-none px-4 pt-2 pb-3"
           onTouchStart={(event) => {

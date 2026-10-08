@@ -69,6 +69,13 @@ model Submission {
   sentence              Sentence @relation(fields: [sentenceId], references: [id])
   englishText           String
   accuracy              Float
+  scoreBreakdown        String?
+  /// JSON mảng { criterion, issue } — lỗi cụ thể AI tìm được.
+  errors                String?
+  /// "score" | "meaning" | "grammar" khi câu chưa qua; null khi qua.
+  blockReason           String?
+  /// 0 khi là lần nộp lại miễn phí sau khi bị chặn chỉ vì ngữ pháp.
+  creditCost            Int      @default(1)
   suggestedImprovements String
   comment               String
   isPerfect             Boolean
